@@ -129,18 +129,20 @@ class NormalizeSubtractStep( BeersSingleStep ) :
 		pNode = self.parameterNode()
 		baselineVolumeID = pNode.GetParameter('baselineVolumeID')
 		followupVolumeID = pNode.GetParameter('followupVolumeID')
+		followupVolume = Helper.getNodeByID(followupVolumeID)
+		baselineVolume = Helper.getNodeByID(baselineVolumeID)
 
 		subtractVolume = slicer.vtkMRMLScalarVolumeNode()
 		subtractVolume.SetScene(slicer.mrmlScene)
-		subtractVolume.SetName('Post Subtraction Node')
+		subtractVolume.SetName(Helper.getNodeByID(baselineVolumeID).GetName() + '_subtraction')
 		slicer.mrmlScene.AddNode(subtractVolume)
 		pNode.SetParameter('subtractVolumeID', subtractVolume.GetID())
 
 		# TO-D0: Understand the math behind interpolation order in image subtraction
 		parameters = {}
-		parameters["inputVolume1"] = followupVolumeID
-		parameters["inputVolume2"] = baselineVolumeID
-		parameters['outputVolume'] = subtractVolume.GetID()
+		parameters["inputVolume1"] = followupVolume
+		parameters["inputVolume2"] = baselineVolume
+		parameters['outputVolume'] = subtractVolume
 		parameters['order'] = '1'
 
 		self.__cliNode = None

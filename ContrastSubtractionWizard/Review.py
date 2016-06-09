@@ -99,8 +99,6 @@ class ReviewStep( BeersSingleStep ) :
 
 		followupRange = self.__followupVolumeNode.GetImageData().GetScalarRange()
 		ROIRange = self.__roiSegmentationNode.GetImageData().GetScalarRange()
-		self.__threshRange.minimum = followupRange[0]
-		self.__threshRange.maximum = followupRange[1]
 
 		if self.__vrDisplayNode == None:
 			if vrDisplayNodeID != '':
@@ -110,24 +108,26 @@ class ReviewStep( BeersSingleStep ) :
 		self.__followupVolumeNode.AddAndObserveDisplayNodeID(self.__vrDisplayNode.GetID())
 		Helper.InitVRDisplayNode(self.__vrDisplayNode, self.__followupVolumeID, '')
 
+		self.__threshRange.minimum = followupRange[0]
+		self.__threshRange.maximum = followupRange[1]
+		self.__threshRange.setValues(followupRange[1]/3, 2*followupRange[1]/3)
+
 		self.__vrOpacityMap = self.__vrDisplayNode.GetVolumePropertyNode().GetVolumeProperty().GetScalarOpacity()
 		vrColorMap = self.__vrDisplayNode.GetVolumePropertyNode().GetVolumeProperty().GetRGBTransferFunction()
 
 		vrColorMap.RemoveAllPoints()
-		vrColorMap.AddRGBPoint(0, 0, 0, 0) 
-		vrColorMap.AddRGBPoint(followupRange[0]-1, 0, 0, 0) 
 		vrColorMap.AddRGBPoint(followupRange[0], 0.8, 0.8, 0) 
 		vrColorMap.AddRGBPoint(followupRange[1], 0.8, 0.8, 0) 
-		vrColorMap.AddRGBPoint(followupRange[1]+1, 0, 0, 0) 
+
 
 		self.__vrDisplayNode.VisibilityOn()
 
-		threshRange = [self.__threshRange.minimumValue, self.__threshRange.maximumValue]
-		self.__vrOpacityMap.RemoveAllPoints()
-		self.__vrOpacityMap.AddPoint(threshRange[1]/2-75,0)
-		self.__vrOpacityMap.AddPoint(threshRange[1]/2,1)
-		self.__vrOpacityMap.AddPoint(threshRange[1]/2+200,1)
-		self.__vrOpacityMap.AddPoint(threshRange[1]/2+250,0)
+		# threshRange = [self.__threshRange.minimumValue, self.__threshRange.maximumValue]
+		# self.__vrOpacityMap.RemoveAllPoints()
+		# self.__vrOpacityMap.AddPoint(threshRange[1]/2-75,0)
+		# self.__vrOpacityMap.AddPoint(threshRange[1]/2,1)
+		# self.__vrOpacityMap.AddPoint(threshRange[1]/2+200,1)
+		# self.__vrOpacityMap.AddPoint(threshRange[1]/2+250,0)
 
 		Helper.SetBgFgVolumes(baselineVolumeID,self.__followupVolumeID)
 		Helper.SetLabelVolume(self.__roiSegmentationNode.GetID())

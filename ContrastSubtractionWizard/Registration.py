@@ -120,14 +120,18 @@ class RegistrationStep( BeersSingleStep ) :
 			baselineVolumeID = pNode.GetParameter('baselineVolumeID')
 			followupVolumeID = pNode.GetParameter('followupVolumeID')
 
+			followupVolume = Helper.getNodeByID(followupVolumeID)
+			baselineVolume = Helper.getNodeByID(baselineVolumeID)
+			print followupVolume.GetName()
+
 			#TO-DO: Find appropriate vtk subclass for non-BSpline transforms.
 			self.__followupTransform = slicer.vtkMRMLBSplineTransformNode()
 			slicer.mrmlScene.AddNode(self.__followupTransform)
 
 			parameters = {}
-			parameters["fixedImage"] = baselineVolumeID
-			parameters["movingImage"] = followupVolumeID
-			parameters['saveTransform'] = self.__followupTransform.GetID()
+			parameters["fixedImage"] = baselineVolume
+			parameters["movingImage"] = followupVolume
+			parameters['saveTransform'] = self.__followupTransform
 			if self.__radio2.isChecked():
 				parameters['registration'] = 'Rigid'
 			if self.__radio3.isChecked():
@@ -160,9 +164,9 @@ class RegistrationStep( BeersSingleStep ) :
 
 			pNode = self.parameterNode()
 			followupNode = slicer.mrmlScene.GetNodeByID(pNode.GetParameter('followupVolumeID'))
-			followupNode.SetAndObserveTransformNodeID(self.__followupTransform.GetID())
+			followupNode.GetMatrixTransformFromNode(self.__followupTransform)
 		
-			Helper.SetBgFgVolumes(pNode.GetParameter('baselineVolumeID'),pNode.GetParameter('followupVolumeID'))
+			Helper.SetBgFgVolumes(pNode.GetParameter('followupVolumeID'), pNode.GetParameter('baselineVolumeID'))
 
 			pNode.SetParameter('followupTransformID', self.__followupTransform.GetID())
 

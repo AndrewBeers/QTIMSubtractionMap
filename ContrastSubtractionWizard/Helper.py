@@ -82,7 +82,7 @@ class Helper( object ):
 		# Takes most of the steps necessary to create a 3D Visualization of an image.
 
 		vrLogic = slicer.modules.volumerendering.logic()
-
+		print vrDisplayNode
 		propNode = vrDisplayNode.GetVolumePropertyNode()
 
 		if propNode == None:

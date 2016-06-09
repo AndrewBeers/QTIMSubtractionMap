@@ -250,7 +250,7 @@ class ROIStep( BeersSingleStep ) :
 		pNode = self.parameterNode()
 
 		if self.__vrDisplayNode != None:
-			self.__vrDisplayNode.VisibilityOff()
+			# self.__vrDisplayNode.VisibilityOff()
 			pNode.SetParameter('vrDisplayNodeID', self.__vrDisplayNode.GetID())
 
 		pNode.SetParameter('roiNodeID', self.__roiSelector.currentNode().GetID())
@@ -279,7 +279,7 @@ class ROIStep( BeersSingleStep ) :
 	def ThresholdPrep(self):
 
 		""" This method prepares for the following segmentation/thresholding
-			step. It accomplishes a few things things. It uses the cropvolume Slicer
+			step. It accomplishes a few things. It uses the cropvolume Slicer
 			module to create a new, ROI-only node. It then creates a label volume
 			and initializes threholds variables for the next step.
 		"""
@@ -299,8 +299,14 @@ class ROIStep( BeersSingleStep ) :
 		cropVolumeLogic = slicer.modules.cropvolume.logic()
 		cropVolumeLogic.Apply(cropVolumeNode)
 
+		baselineVolumeID = pNode.GetParameter('baselineVolumeID')
+		followupVolumeID = pNode.GetParameter('followupVolumeID')
+
+		followupVolume = Helper.getNodeByID(followupVolumeID)
+		baselineVolume = Helper.getNodeByID(baselineVolumeID)
+
 		outputVolume = slicer.mrmlScene.GetNodeByID(cropVolumeNode.GetOutputVolumeNodeID())
-		outputVolume.SetName("subtractROI")
+		outputVolume.SetName(baselineVolume.getName() + '_subtraction_roi')
 		pNode.SetParameter('croppedSubtractVolumeID',cropVolumeNode.GetOutputVolumeNodeID())
 
 		# Get starting threshold parameters.
@@ -313,7 +319,7 @@ class ROIStep( BeersSingleStep ) :
 
 		# Create a label node for segmentation.
 		vl = slicer.modules.volumes.logic()
-		roiSegmentation = vl.CreateLabelVolume(slicer.mrmlScene, outputVolume, 'subtractROI_segmentation')
+		roiSegmentation = vl.CreateLabelVolume(slicer.mrmlScene, outputVolume, baselineVolumeID.getName() + 'subtraction_annotation')
 		pNode.SetParameter('croppedSubtractVolumeSegmentationID', roiSegmentation.GetID())
 
 	def InitVRDisplayNode(self):
