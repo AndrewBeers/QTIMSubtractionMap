@@ -306,7 +306,7 @@ class ROIStep( BeersSingleStep ) :
 		baselineVolume = Helper.getNodeByID(baselineVolumeID)
 
 		outputVolume = slicer.mrmlScene.GetNodeByID(cropVolumeNode.GetOutputVolumeNodeID())
-		outputVolume.SetName(baselineVolume.getName() + '_subtraction_roi')
+		outputVolume.SetName(baselineVolume.GetName() + '_subtraction_roi')
 		pNode.SetParameter('croppedSubtractVolumeID',cropVolumeNode.GetOutputVolumeNodeID())
 
 		# Get starting threshold parameters.
@@ -319,7 +319,7 @@ class ROIStep( BeersSingleStep ) :
 
 		# Create a label node for segmentation.
 		vl = slicer.modules.volumes.logic()
-		roiSegmentation = vl.CreateLabelVolume(slicer.mrmlScene, outputVolume, baselineVolumeID.getName() + 'subtraction_annotation')
+		roiSegmentation = vl.CreateLabelVolume(slicer.mrmlScene, outputVolume, baselineVolume.GetName() + 'subtraction_annotation')
 		pNode.SetParameter('croppedSubtractVolumeSegmentationID', roiSegmentation.GetID())
 
 	def InitVRDisplayNode(self):

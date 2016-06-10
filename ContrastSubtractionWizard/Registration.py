@@ -132,6 +132,7 @@ class RegistrationStep( BeersSingleStep ) :
 			parameters["fixedImage"] = baselineVolume
 			parameters["movingImage"] = followupVolume
 			parameters['saveTransform'] = self.__followupTransform
+			parameters['resampledImage'] = followupVolume
 			if self.__radio2.isChecked():
 				parameters['registration'] = 'Rigid'
 			if self.__radio3.isChecked():
@@ -163,8 +164,8 @@ class RegistrationStep( BeersSingleStep ) :
 			self.__registrationButton.setEnabled(1)
 
 			pNode = self.parameterNode()
-			followupNode = slicer.mrmlScene.GetNodeByID(pNode.GetParameter('followupVolumeID'))
-			followupNode.GetMatrixTransformFromNode(self.__followupTransform)
+			# followupNode = slicer.mrmlScene.GetNodeByID(pNode.GetParameter('followupVolumeID'))
+			# followupNode.GetMatrixTransformFromNode(self.__followupTransform)
 		
 			Helper.SetBgFgVolumes(pNode.GetParameter('followupVolumeID'), pNode.GetParameter('baselineVolumeID'))
 
