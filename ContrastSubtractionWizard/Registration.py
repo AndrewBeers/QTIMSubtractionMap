@@ -24,7 +24,7 @@ class RegistrationStep( BeersSingleStep ) :
 
 		self.initialize( stepid )
 		self.setName( '2. Registration' )
-		self.setDescription( """Please select your preferred method of registration. If you have already registered your images, or no registration is required, check the option "No Registration." Be aware that many other modules in Slicer have more complex and/or customizable registration methods, should the methods in this step prove insufficient.
+		self.setDescription( """Please select your preferred method of registration. If you have already registered your images, or no registration is required, check the option "No Registration." Your post-contrast image will be registered to your pre-contrast image, and then resampled at the new registration. Be aware that many other modules in Slicer have more complex and/or customizable registration methods, should the methods in this step prove insufficient.
 			""")
 
 		self.__parent = super( RegistrationStep, self )
@@ -41,28 +41,64 @@ class RegistrationStep( BeersSingleStep ) :
 
 		self.__layout = self.__parent.createUserInterface()
 
+		# Moving/Fixed Image Registration Order Options
+
+		OrderGroupBox = qt.QGroupBox()
+		OrderGroupBox.setTitle('Registration Order')
+		self.__layout.addRow(OrderGroupBox)
+
+		OrderGroupBoxLayout = qt.QFormLayout(OrderGroupBox)
+
+		self.__OrderRadio1 = qt.QRadioButton("Register pre-contrast to post-contrast.")
+		self.__OrderRadio1.toolTip = "Your post-contrast image will be transformed."
+		OrderGroupBoxLayout.addRow(self.__OrderRadio1)
+		self.__OrderRadio1.setChecked(True)
+
+		self.__OrderRadio2 = qt.QRadioButton("Register post-contrast to pre-contrast.")
+		self.__OrderRadio2.toolTip = "Your pre-contrast image will be transformed."
+		OrderGroupBoxLayout.addRow(self.__OrderRadio2)
+
+		# # Resample/Transform Options
+
+		# SamplingGroupBox = qt.QGroupBox()
+		# SamplingGroupBox.setTitle('Resampling Options')
+		# self.__layout.addRow(SamplingGroupBox)
+
+		# SamplingGroupBoxLayout = qt.QFormLayout(SamplingGroupBox)
+
+		# self.__SamplingRadio1 = qt.QRadioButton("Fix pre-contrast image; register post-contrast image.")
+		# self.__SamplingRadio1.toolTip = "Your post-contrast image will be transformed."
+		# SamplingGroupBoxLayout.addRow(self.__SamplingRadio1)
+		# self.__radio1.setChecked(True)
+
+		# self.__SamplingRadio2 = qt.QRadioButton("Fix post-contrast image; register pre-contrast image.")
+		# self.__SamplingRadio2.toolTip = "Your pre-contrast image will be transformed."
+		# SamplingGroupBoxLayout.addRow(self.__SamplingRadio2)
+
+		# Registration Method Options
+
 		RegistrationGroupBox = qt.QGroupBox()
 		RegistrationGroupBox.setTitle('Registration Method')
 		self.__layout.addRow(RegistrationGroupBox)
 
 		RegistrationGroupBoxLayout = qt.QFormLayout(RegistrationGroupBox)
 
-		self.__radio1 = qt.QRadioButton("No Registration")
-		self.__radio1.toolTip = "Performs no registration."
-		RegistrationGroupBoxLayout.addRow(self.__radio1)
-		self.__radio1.setChecked(True)
+		self.__RegistrationRadio1 = qt.QRadioButton("No Registration")
+		self.__RegistrationRadio1.toolTip = "Performs no registration."
+		RegistrationGroupBoxLayout.addRow(self.__RegistrationRadio1)
+		self.__RegistrationRadio1.setChecked(True)
 
-		self.__radio2 = qt.QRadioButton("Rigid Registration (Fastest)")
-		self.__radio2.toolTip = """Computes a rigid registration on the pre-contrast image with respect to the post-contrast image. This is likely to be the fastest registration method"""
-		RegistrationGroupBoxLayout.addRow(self.__radio2)
+		self.__RegistrationRadio2 = qt.QRadioButton("Rigid Registration (Fastest)")
+		self.__RegistrationRadio2.toolTip = """Computes a rigid registration on the pre-contrast image with respect to the post-contrast image. This will likely be the fastest registration method"""
+		RegistrationGroupBoxLayout.addRow(self.__RegistrationRadio2)
 
-		self.__radio3 = qt.QRadioButton("Affine Registration")
-		self.__radio3.toolTip = "Computes a rigid and affine registration on the pre-contrast image with respect to the post-contrast image."
-		RegistrationGroupBoxLayout.addRow(self.__radio3)
+		self.__RegistrationRadio3 = qt.QRadioButton("Affine Registration")
+		self.__RegistrationRadio3.toolTip = "Computes a rigid and affine registration on the pre-contrast image with respect to the post-contrast image."
+		RegistrationGroupBoxLayout.addRow(self.__RegistrationRadio3)
 		
-		self.__radio4 = qt.QRadioButton("BSpline Registration (Slowest)")
-		self.__radio4.toolTip = """Computes a BSpline Registration on the pre-contrast image with respect to the post-contrast image. This method is slowest and may be necessary for only severly distorted images."""
-		RegistrationGroupBoxLayout.addRow(self.__radio4)
+		self.__RegistrationRadio4 = qt.QRadioButton("BSpline Registration (Slowest)")
+		self.__RegistrationRadio4.toolTip = """Computes a BSpline Registration on the pre-contrast image with respect to the post-contrast image. This method is slowest and may be necessary for only severly distorted images."""
+		RegistrationGroupBoxLayout.addRow(self.__RegistrationRadio4)
 
 		self.__registrationButton = qt.QPushButton('Run registration')
 		self.__registrationStatus = qt.QLabel('Register scans')
@@ -84,7 +120,13 @@ class RegistrationStep( BeersSingleStep ) :
 
 		self.__parent.validate( desiredBranchId )
 
-		if self.__status == 'Uncalled' or self.__status == 'Completed':
+
+		if self.__status == 'Uncalled':
+			if self.__RegistrationRadio1.isChecked():
+				self.__parent.validationSucceeded(desiredBranchId)
+			else:
+				self.__parent.validationFailed(desiredBranchId, 'Error','Please click \"Run Registration\" or select the \"No Registration\" option to continue.')
+		elif self.__status == 'Completed':
 			self.__parent.validationSucceeded(desiredBranchId)
 		else:
 			self.__parent.validationFailed(desiredBranchId, 'Error','Please wait until registration is completed.')
@@ -113,31 +155,36 @@ class RegistrationStep( BeersSingleStep ) :
 			computes a transform, which is then applied to the followup volume in
 			processRegistrationCompletion. TO-DO: Add a cancel button..
 		"""
-		if self.__radio1.isChecked():
+		if self.__RegistrationRadio1.isChecked():
 			return
 		else:
 			pNode = self.parameterNode()
-			baselineVolumeID = pNode.GetParameter('baselineVolumeID')
-			followupVolumeID = pNode.GetParameter('followupVolumeID')
-
-			followupVolume = Helper.getNodeByID(followupVolumeID)
-			baselineVolume = Helper.getNodeByID(baselineVolumeID)
-			print followupVolume.GetName()
 
 			#TO-DO: Find appropriate vtk subclass for non-BSpline transforms.
 			self.__followupTransform = slicer.vtkMRMLBSplineTransformNode()
 			slicer.mrmlScene.AddNode(self.__followupTransform)
 
 			parameters = {}
-			parameters["fixedImage"] = baselineVolume
-			parameters["movingImage"] = followupVolume
+
+			if self.__OrderRadio1.isChecked():
+				fixedVolumeID = pNode.GetParameter('baselineVolumeID')
+				movingVolumeID = pNode.GetParameter('followupVolumeID')
+			else:
+				fixedVolumeID = pNode.GetParameter('followupVolumeID')
+				movingVolumeID = pNode.GetParameter('baselineVolumeID')
+
+			fixedVolume = Helper.getNodeByID(fixedVolumeID)
+			movingVolume = Helper.getNodeByID(movingVolumeID)
+
+			parameters["fixedImage"] = fixedVolume
+			parameters["movingImage"] = movingVolume
 			parameters['saveTransform'] = self.__followupTransform
-			parameters['resampledImage'] = followupVolume
-			if self.__radio2.isChecked():
+			parameters['resampledImage'] = movingVolume
+			if self.__RegistrationRadio2.isChecked():
 				parameters['registration'] = 'Rigid'
-			if self.__radio3.isChecked():
+			if self.__RegistrationRadio3.isChecked():
 				parameters['registration'] = 'Affine'
-			if self.__radio4.isChecked():
+			if self.__RegistrationRadio4.isChecked():
 				parameters['registration'] = 'BSpline'
 				parameters['minimizeMemory'] = 'true'
 

@@ -92,7 +92,9 @@ class ReviewStep( BeersSingleStep ) :
 
 		baselineVolumeID = pNode.GetParameter('baselineVolumeID')
 		self.__followupVolumeID = pNode.GetParameter('followupVolumeID')
+		self.__subtractVolumeID = pNode.GetParameter('subtractVolumeID')
 		self.__followupVolumeNode = Helper.getNodeByID(self.__followupVolumeID)
+		self.__subtractVolumeNode = Helper.getNodeByID(self.__subtractVolumeID)
 		vrDisplayNodeID = pNode.GetParameter('vrDisplayNodeID')
 		self.__roiSegmentationNode = Helper.getNodeByID(pNode.GetParameter('croppedSubtractVolumeSegmentationID'))
 		self.__roiVolumeNode = Helper.getNodeByID(pNode.GetParameter('croppedSubtractVolumeID'))
@@ -105,8 +107,8 @@ class ReviewStep( BeersSingleStep ) :
 				self.__vrDisplayNode = slicer.mrmlScene.GetNodeByID(vrDisplayNodeID)
 
 		self.__vrDisplayNode.SetCroppingEnabled(0)
-		self.__followupVolumeNode.AddAndObserveDisplayNodeID(self.__vrDisplayNode.GetID())
-		Helper.InitVRDisplayNode(self.__vrDisplayNode, self.__followupVolumeID, '')
+		self.__subtractVolumeNode.AddAndObserveDisplayNodeID(self.__vrDisplayNode.GetID())
+		Helper.InitVRDisplayNode(self.__vrDisplayNode, self.__subtractVolumeID, '')
 
 		self.__threshRange.minimum = followupRange[0]
 		self.__threshRange.maximum = followupRange[1]

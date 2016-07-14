@@ -25,6 +25,10 @@ from __main__ import vtk, qt, ctk, slicer
 
 import ContrastSubtractionWizard
 
+def batch():
+	print 'Batched!'
+	open('testcase.txt', 'a').close()
+
 class ContrastSubtraction:
 
 	def __init__( self, parent ):
@@ -34,7 +38,6 @@ class ContrastSubtraction:
 			Modifications to the parent result in modifications to the qt box that 
 			contains the relevant information.
 		"""
-
 		parent.title = """ContrastSubtraction"""
 		parent.categories = ["""Examples"""]
 		parent.contributors = ["""Andrew Beers"""]
@@ -49,7 +52,6 @@ class ContrastSubtraction:
 class ContrastSubtractionWidget:
 
 	def __init__( self, parent=None ):
-
 		""" It seems to be that Slicer creates an instance of this class with a
 			qMRMLWidget parent. If for some reason it doesn't, this __init__ will.
 		"""
@@ -69,7 +71,6 @@ class ContrastSubtractionWidget:
 			steps one can traverse with "next" / "previous" buttons. The steps themselves
 			are contained within ContrastSubtractionWizard.
 		"""
-
 		# Currently unclear on the difference between ctkWorkflow and
 		# ctkWorkflowStackedWidget, but presumably the latter creates a UI
 		# for the former
@@ -150,5 +151,5 @@ class ContrastSubtractionWidget:
 	def enter(self):
 		""" A quick check to see if the file was loaded. Can be seen in the Python Interactor.
 		"""
-
+		import ContrastSubtraction
 		print "Contrast Subtraction Module Entered"
