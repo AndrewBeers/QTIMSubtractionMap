@@ -6,6 +6,7 @@
 """
 
 from __main__ import qt, ctk
+from slicer.ScriptedLoadableModule import *
 
 class BeersSingleStep( ctk.ctkWorkflowWidgetStep ) :
 

@@ -102,6 +102,7 @@ class ContrastSubtractionWidget:
 		self.workflow.addTransition(self.Step3, self.Step4)
 		self.workflow.addTransition(self.Step4, self.Step5)
 		self.workflow.addTransition(self.Step5, self.Step6)
+		self.workflow.addTransition(self.Step6, self.Step1)
 
 		# The following code creates a so-called parameter node referencing the
 		# vtkMRMLScriptedModuleNode class, while checking to make sure one doesn't

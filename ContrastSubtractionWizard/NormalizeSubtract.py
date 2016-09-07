@@ -180,6 +180,8 @@ class NormalizeSubtractStep( BeersSingleStep ) :
 
 		pNode = self.parameterNode()
 
+		volumesLogic = slicer.modules.volumes.logic()
+
 		baselineLabel = pNode.GetParameter('baselineVolumeID')
 		followupLabel = pNode.GetParameter('followupVolumeID')
 
@@ -189,7 +191,9 @@ class NormalizeSubtractStep( BeersSingleStep ) :
 		baselineImage = baselineNode.GetImageData()
 		followupImage = followupNode.GetImageData()
 
+		nodeArray = [baselineNode, followupNode]
 		imageArray = [baselineImage, followupImage]
+		resultArray = ['','']
 		stdArray = [0,0]
 		maxArray = [0,0]
 		vtkScaleArray = [vtk.vtkImageShiftScale(), vtk.vtkImageShiftScale()]
@@ -204,6 +208,15 @@ class NormalizeSubtractStep( BeersSingleStep ) :
 
 		# Values are rescaled to the highest intensity value from both images.
 		CommonMax = maxArray.index(max(maxArray))
+		LowerMaxImage = imageArray[CommonMax]
+
+		# vtkScaleArray[i].SetInputData(imageArray[i])
+		# vtkScaleArray[i].SetOutputScalarTypeToInt()
+		# scalar = float(stdArray[CommonMax]) / float(stdArray[i])
+		# vtkScaleArray[i].SetScale(scalar)
+		# vtkScaleArray[i].Update()
+		# imageArray[i] = vtkScaleArray[i].GetOutput()
+
 
 		# Image scalar multiplication is perfored to normalize the two images.
 		for i in [0,1]:
@@ -213,8 +226,13 @@ class NormalizeSubtractStep( BeersSingleStep ) :
 			vtkScaleArray[i].SetScale(scalar)
 			vtkScaleArray[i].Update()
 			imageArray[i] = vtkScaleArray[i].GetOutput()
+			volumesLogic.CloneVolumeWithoutImageData(slicer.mrmlScene, nodeArray[i], 'normalizeVolume_' + str(i))
+			resultArray[i] = slicer.util.getNode('normalizeVolume_' + str(i))
+			print resultArray[i]
+			resultArray[i].SetAndObserveImageData(imageArray[i])
+			pNode.SetParameter('normalizeVolume_' + str(i), resultArray[i].GetID())
 
 		# Node image data is replaced. The image with the higher max intensity effectively does not change.
-		baselineNode.SetAndObserveImageData(imageArray[0])
-		followupNode.SetAndObserveImageData(imageArray[1])
+		# baselineNode.SetAndObserveImageData(imageArray[0])
+		# followupNode.SetAndObserveImageData(imageArray[1])
 		self.__normalizationButton.setText('Normalization complete!')

@@ -7,6 +7,8 @@ from __main__ import qt, ctk, slicer
 
 from BeersSingleStep import *
 from Helper import *
+from Editor import EditorWidget
+from EditorLib import EditorLib
 
 """ VolumeSelectStep inherits from BeersSingleStep, with itself inherits
 	from a ctk workflow class. 
@@ -58,13 +60,6 @@ class VolumeSelectStep(BeersSingleStep) :
 
 		qt.QTimer.singleShot(0, self.killButton)
 
-	def killButton(self):
-
-		# ctk creates a useless final page button. This method gets rid of it.
-		bl = slicer.util.findChildren(text='ReviewStep')
-		if len(bl):
-			bl[0].hide()
-
 	def validate( self, desiredBranchId ):
 
 		# validate is called whenever go to a different step
@@ -102,6 +97,7 @@ class VolumeSelectStep(BeersSingleStep) :
 		qt.QTimer.singleShot(0, self.killButton)
 
 	def onExit(self, goingTo, transitionType):   
+		print slicer.util.findChildren('','EditColorFrame')
 		super(BeersSingleStep, self).onExit(goingTo, transitionType) 
 
 	def updateWidgetFromParameters(self, parameterNode):

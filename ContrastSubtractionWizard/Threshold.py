@@ -108,12 +108,11 @@ class ThresholdStep( BeersSingleStep ) :
 		"""
 
 		super(ThresholdStep, self).onEntry(comingFrom, transitionType)
-
 		pNode = self.parameterNode()
 		self.updateWidgetFromParameters(pNode)
 
 		# Removes the background volume.
-		Helper.SetBgFgVolumes(pNode.GetParameter('croppedSubtractVolumeID'),'')
+		Helper.SetBgFgVolumes(pNode.GetParameter('subtractVolumeID'), pNode.GetParameter('croppedSubtractVolumeID'))
 
 		# Retrieves necessary nodes.
 		roiVolume = Helper.getNodeByID(pNode.GetParameter('croppedSubtractVolumeID'))
@@ -121,17 +120,19 @@ class ThresholdStep( BeersSingleStep ) :
 		self.__roiSegmentationNode = Helper.getNodeByID(pNode.GetParameter('croppedSubtractVolumeSegmentationID'))
 		vrDisplayNodeID = pNode.GetParameter('vrDisplayNodeID')
 
-		if self.__vrDisplayNode == None:
-			if vrDisplayNodeID != '':
-				self.__vrDisplayNode = slicer.mrmlScene.GetNodeByID(vrDisplayNodeID)
-
-		roiNodeID = pNode.GetParameter('roiNodeID')
-		if roiNodeID == None:
+		self.__roiNodeID = pNode.GetParameter('roiNodeID')
+		if self.__roiNodeID == None:
 			Helper.Error('Failed to find ROI node -- it should have been defined in the previous step!')
 			return
 
-		# Creates volume rendering node.
-		Helper.InitVRDisplayNode(self.__vrDisplayNode, roiVolume.GetID(), roiNodeID)
+		if self.__vrDisplayNode == None:
+			if vrDisplayNodeID != '':
+				self.__vrDisplayNode = slicer.mrmlScene.GetNodeByID(vrDisplayNodeID)
+			if self.__vrDisplayNode == None:
+				self.InitVRDisplayNode()
+				self.__vrDisplayNodeID = self.__vrDisplayNode.GetID()
+		else:
+			Helper.InitVRDisplayNode(self.__vrDisplayNode, roiVolume.GetID(), self.__roiNodeID)	
 
 		# Does work to intialize color and opacity maps
 		self.__vrOpacityMap = self.__vrDisplayNode.GetVolumePropertyNode().GetVolumeProperty().GetScalarOpacity()
@@ -172,7 +173,10 @@ class ThresholdStep( BeersSingleStep ) :
 		qt.QTimer.singleShot(0, self.killButton)
 
 	def onExit(self, goingTo, transitionType):   
-
+		pNode = self.parameterNode()
+		if self.__vrDisplayNode != None:
+			# self.__vrDisplayNode.VisibilityOff()
+			pNode.SetParameter('vrDisplayNodeID', self.__vrDisplayNode.GetID())
 		super(BeersSingleStep, self).onExit(goingTo, transitionType) 
 
 	def updateWidgetFromParameters(self, pNode):
@@ -196,3 +200,33 @@ class ThresholdStep( BeersSingleStep ) :
 		segmentationID = pNode.GetParameter('croppedSubtractVolumeSegmentationID')
 		self.__roiSegmentationNode = Helper.getNodeByID(segmentationID)
 
+	def InitVRDisplayNode(self):
+
+		"""	This method calls a series of steps necessary to initailizing a volume 
+			rendering node with an ROI.
+		"""
+		if self.__vrDisplayNode == None:
+			pNode = self.parameterNode()
+			self.__vrDisplayNode = self.__vrLogic.CreateVolumeRenderingDisplayNode()
+			slicer.mrmlScene.AddNode(self.__vrDisplayNode)
+			# Documentation on UnRegister is scant so far.
+			self.__vrDisplayNode.UnRegister(self.__vrLogic) 
+
+			v = slicer.mrmlScene.GetNodeByID(self.parameterNode().GetParameter('croppedSubtractVolumeID'))
+			Helper.InitVRDisplayNode(self.__vrDisplayNode, v.GetID(), '')
+			v.AddAndObserveDisplayNodeID(self.__vrDisplayNode.GetID())
+
+		# This is a bit messy.
+		viewNode = slicer.util.getNode('vtkMRMLViewNode1')
+
+		self.__vrDisplayNode.AddViewNodeID(viewNode.GetID())
+		
+		self.__vrLogic.CopyDisplayToVolumeRenderingDisplayNode(self.__vrDisplayNode)
+
+		self.__vrOpacityMap = self.__vrDisplayNode.GetVolumePropertyNode().GetVolumeProperty().GetScalarOpacity()
+		self.__vrColorMap = self.__vrDisplayNode.GetVolumePropertyNode().GetVolumeProperty().GetRGBTransferFunction()
+
+		# Renders in yellow, like the label map in the next steps.
+		self.__vrColorMap.RemoveAllPoints()
+		self.__vrColorMap.AddRGBPoint(0, 0.8, 0.8, 0)
+		self.__vrColorMap.AddRGBPoint(500, 0.8, 0.8, 0)
